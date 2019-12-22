@@ -4,15 +4,20 @@
 Updated BME280 driver to version 3.3.7.
 
 Added fuctions to set the oversampling value ( default 8x )
+```
 	setTemperatureOversampling( <0,1,2,4,8,16> )
 	setPressureOversampling( <0,1,2,4,8,16> )
 	setHumidityOversampling( <0,1,2,4,8,16> )
-
+```
 Added function to set the filter coefficent ( default 0 )
+```
 	setFilterCoeff( <0,2,4,8,16> )
-
+```
 Replaced fixed delay (255) in measure by datasheet formula ( Appendix B: Measurement time and current calculation )
+
+```
 𝑡𝑚𝑒𝑎𝑠𝑢𝑟𝑒,𝑚𝑎𝑥 = 1.25 + [2.3 ⋅ 𝑇_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔]𝑜𝑠𝑟𝑠_𝑡≠0 + [2.3 ⋅ 𝑃_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_𝑝≠0 + [2.3 ⋅ 𝐻_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_h≠0
+```
 
 ## About
 This is Arduino library for BME280 environmental sensor. This library is based on reference code released by Bosch Sensortec.
