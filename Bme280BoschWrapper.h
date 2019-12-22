@@ -26,11 +26,19 @@ class Bme280BoschWrapper
     //Air pressure in Pa
     uint32_t getPressure();
 
+    // set oversampling
+    void setPressureOversampling( uint8_t osr ); 
+    void setTemperatureOversampling( uint8_t osr ); 
+    void setHumidityOversampling( uint8_t osr );
+    // set filter coeff
+    void setFilterCoeff( uint8_t fcoeff ); 
+
   private:
     void I2CInit();
     void SPIInit();
     int8_t setSensorSettings();
-  
+
+
     static int8_t I2CRead(uint8_t dev_addr, uint8_t reg_addr, uint8_t *reg_data, uint16_t cnt);
     static int8_t I2CWrite(uint8_t dev_addr, uint8_t reg_addr, uint8_t *reg_data, uint16_t cnt);
     static int8_t SPIRead(uint8_t dev_addr, uint8_t reg_addr, uint8_t *reg_data, uint16_t cnt);
@@ -44,6 +52,13 @@ class Bme280BoschWrapper
 
     bool forced;
     bool error = false;
+
+    uint8_t osr_t = BME280_OVERSAMPLING_8X;
+    uint8_t osr_p = BME280_OVERSAMPLING_8X;
+    uint8_t osr_h = BME280_OVERSAMPLING_8X;
+    uint8_t osr2macro( uint8_t osr);
+
+    uint8_t filter_coeff = BME280_FILTER_COEFF_OFF;
 };
 
 #endif

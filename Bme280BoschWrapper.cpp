@@ -44,11 +44,20 @@ bool Bme280BoschWrapper::beginSPI(int8_t cspin)
 bool Bme280BoschWrapper::measure()
 {
   int8_t ret = BME280_OK;
+  float ms=1.25;
 
   if(forced)
   {
     setSensorSettings();
-    bme280.delay_ms(255);
+
+    // measure time by bosch data sheet
+    // 𝑡𝑚𝑒𝑎𝑠𝑢𝑟𝑒,𝑚𝑎𝑥 = 1.25 + [2.3 ⋅ 𝑇_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔]𝑜𝑠𝑟𝑠_𝑡≠0 + [2.3 ⋅ 𝑃_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_𝑝≠0 + [2.3 ⋅ 𝐻_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_h≠0
+    if( bme280.settings.osr_t > 0 ) ms += 2.3* ( 1 << (bme280.settings.osr_t-1));
+    if( bme280.settings.osr_p > 0 ) ms += 2.3* ( 1 << (bme280.settings.osr_p-1)) + 0.575;
+    if( bme280.settings.osr_h > 0 ) ms += 2.3* ( 1 << (bme280.settings.osr_h-1)) + 0.575;
+
+    bme280.delay_ms((uint32_t)ms);
+//    bme280.delay_ms(255);
     ret += bme280_get_sensor_data(BME280_PRESS | BME280_HUM | BME280_TEMP, &comp_data, &bme280);
   }
   else
@@ -224,11 +233,17 @@ int8_t Bme280BoschWrapper::setSensorSettings()
 
   uint8_t settings_sel;
 
-  bme280.settings.osr_h = BME280_OVERSAMPLING_16X;
-  bme280.settings.osr_p = BME280_OVERSAMPLING_16X;
-  bme280.settings.osr_t = BME280_OVERSAMPLING_16X;
+//  bme280.settings.osr_h = BME280_OVERSAMPLING_16X;
+//  bme280.settings.osr_p = BME280_OVERSAMPLING_16X;
+//  bme280.settings.osr_t = BME280_OVERSAMPLING_16X;
+//  bme280.settings.filter = BME280_FILTER_COEFF_OFF;
 
-  settings_sel = BME280_OSR_PRESS_SEL|BME280_OSR_TEMP_SEL|BME280_OSR_HUM_SEL;
+  bme280.settings.osr_h = this->osr_h;
+  bme280.settings.osr_p = this->osr_p;
+  bme280.settings.osr_t = this->osr_t;
+  bme280.settings.filter = this->filter_coeff;
+
+  settings_sel = BME280_OSR_PRESS_SEL|BME280_OSR_TEMP_SEL|BME280_OSR_HUM_SEL|BME280_FILTER_SEL;
 
   ret += bme280_set_sensor_settings(settings_sel, &bme280);
 
@@ -239,3 +254,39 @@ int8_t Bme280BoschWrapper::setSensorSettings()
 
   return ret;
 }
+
+void Bme280BoschWrapper::setTemperatureOversampling( uint8_t osr )
+{
+  this->osr_t = osr2macro(osr);
+}
+
+void Bme280BoschWrapper::setPressureOversampling( uint8_t osr )
+{
+  this->osr_p = osr2macro(osr);
+}
+
+void Bme280BoschWrapper::setHumidityOversampling( uint8_t osr )
+{
+  this->osr_h = osr2macro(osr);
+}
+
+uint8_t Bme280BoschWrapper::osr2macro( uint8_t osr)
+{
+  uint8_t ret=0;
+  if( osr > 0 && osr <= 16 ) {
+    do
+      ret++;
+    while ( (osr >> ret ) >0 );
+  }
+  return ret;
+}
+
+void Bme280BoschWrapper::setFilterCoeff( uint8_t fcoeff )
+{
+  uint8_t ctc=0;
+  if( fcoeff > 0 && fcoeff <= 16 ) {
+    while ( ( fcoeff >> ctc ) >1 ) ctc++;  
+  }
+  filter_coeff = ctc;
+}
+
