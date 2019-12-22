@@ -13,7 +13,7 @@ Added function to set the filter coefficent ( default 0 )
 ```
 	setFilterCoeff( <0,2,4,8,16> )
 ```
-Replaced fixed measure delay (255ms) in line with the spec at bme280 datasheet ( **Appendix B: Measurement time and current calculation** )
+Replaced fixed measure delay (255ms) in line with the spec at bme280 datasheet ( *Appendix B: Measurement time and current calculation* )
 
 ```
 𝑡𝑚𝑒𝑎𝑠𝑢𝑟𝑒,𝑚𝑎𝑥 = 1.25 + [2.3 ⋅ 𝑇_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔]𝑜𝑠𝑟𝑠_𝑡≠0 + [2.3 ⋅ 𝑃_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_𝑝≠0 + [2.3 ⋅ 𝐻_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_h≠0
