@@ -31,12 +31,26 @@ class Bme280BoschWrapper
     void setTemperatureOversampling( uint8_t osr ); 
     void setHumidityOversampling( uint8_t osr );
     // set filter coeff
-    void setFilterCoeff( uint8_t fcoeff ); 
+    void setFilterCoeff( uint8_t fcoeff );
+    // set standby time ( normal mode )
+    /* name Standby duration selection
+	BME280_STANDBY_TIME_0_5_MS
+	BME280_STANDBY_TIME_62_5_MS
+	BME280_STANDBY_TIME_125_MS
+	BME280_STANDBY_TIME_250_MS
+	BME280_STANDBY_TIME_500_MS
+	BME280_STANDBY_TIME_1000_MS
+	BME280_STANDBY_TIME_10_MS
+	BME280_STANDBY_TIME_20_MS
+    */
+
+    void setStandbyTime( uint8_t tstb );
 
   private:
     void I2CInit();
     void SPIInit();
     int8_t setSensorSettings();
+    bool set_setting = true;
 
 
     static int8_t I2CRead(uint8_t dev_addr, uint8_t reg_addr, uint8_t *reg_data, uint16_t cnt);
@@ -44,6 +58,8 @@ class Bme280BoschWrapper
     static int8_t SPIRead(uint8_t dev_addr, uint8_t reg_addr, uint8_t *reg_data, uint16_t cnt);
     static int8_t SPIWrite(uint8_t dev_addr, uint8_t reg_addr, uint8_t *reg_data, uint16_t cnt);
     static void delaymsec(uint32_t msec);
+
+    float measuredelay = 255;
 
     static int _cs;
 
@@ -58,7 +74,8 @@ class Bme280BoschWrapper
     uint8_t osr_h = BME280_OVERSAMPLING_8X;
     uint8_t osr2macro( uint8_t osr);
 
-    uint8_t filter_coeff = BME280_FILTER_COEFF_OFF;
+    uint8_t filter = BME280_FILTER_COEFF_OFF;
+    uint8_t standby_time = BME280_STANDBY_TIME_500_MS;
 };
 
 #endif

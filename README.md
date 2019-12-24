@@ -1,5 +1,20 @@
 # BME280_Bosch_Wrapper
 
+## News 24-12-2019
+Added fuctions to set normal mode standby time ( default 500ms )
+```
+	setStandbyTime( BME280_STANDBY_TIME[ms] )
+
+	BME280_STANDBY_TIME_0_5_MS
+	BME280_STANDBY_TIME_62_5_MS
+	BME280_STANDBY_TIME_125_MS
+	BME280_STANDBY_TIME_250_MS
+	BME280_STANDBY_TIME_500_MS
+	BME280_STANDBY_TIME_1000_MS
+	BME280_STANDBY_TIME_10_MS
+	BME280_STANDBY_TIME_20_MS
+```
+
 ## News 22-12-2019
 Updated BME280 driver to version 3.3.7.
 

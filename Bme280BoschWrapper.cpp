@@ -44,24 +44,18 @@ bool Bme280BoschWrapper::beginSPI(int8_t cspin)
 bool Bme280BoschWrapper::measure()
 {
   int8_t ret = BME280_OK;
-  float ms=1.25;
+
+  if( this->set_setting) setSensorSettings();
 
   if(forced)
   {
-    setSensorSettings();
+    ret += bme280_set_sensor_mode(BME280_FORCED_MODE, &bme280);
 
-    // measure time by bosch data sheet
-    // 𝑡𝑚𝑒𝑎𝑠𝑢𝑟𝑒,𝑚𝑎𝑥 = 1.25 + [2.3 ⋅ 𝑇_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔]𝑜𝑠𝑟𝑠_𝑡≠0 + [2.3 ⋅ 𝑃_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_𝑝≠0 + [2.3 ⋅ 𝐻_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_h≠0
-    if( bme280.settings.osr_t > 0 ) ms += 2.3* ( 1 << (bme280.settings.osr_t-1));
-    if( bme280.settings.osr_p > 0 ) ms += 2.3* ( 1 << (bme280.settings.osr_p-1)) + 0.575;
-    if( bme280.settings.osr_h > 0 ) ms += 2.3* ( 1 << (bme280.settings.osr_h-1)) + 0.575;
-
-    bme280.delay_ms((uint32_t)ms);
+    bme280.delay_ms((uint32_t)this->measuredelay);
 //    bme280.delay_ms(255);
     ret += bme280_get_sensor_data(BME280_PRESS | BME280_HUM | BME280_TEMP, &comp_data, &bme280);
-  }
-  else
-  {
+
+  } else {
     ret += bme280_get_sensor_data(BME280_PRESS | BME280_HUM | BME280_TEMP, &comp_data, &bme280);
   }
 
@@ -143,9 +137,7 @@ int8_t Bme280BoschWrapper::I2CRead(uint8_t dev_addr, uint8_t reg_addr, uint8_t *
       *(reg_data + i) = Wire.read();
 //      Serial.print(*(reg_data + i), HEX);
 //      Serial.print(" ");
-    }
-    else
-      Wire.read();
+    } else Wire.read();
   }
 
 //  Serial.println();
@@ -241,33 +233,46 @@ int8_t Bme280BoschWrapper::setSensorSettings()
   bme280.settings.osr_h = this->osr_h;
   bme280.settings.osr_p = this->osr_p;
   bme280.settings.osr_t = this->osr_t;
-  bme280.settings.filter = this->filter_coeff;
+  bme280.settings.filter = this->filter;
 
-  settings_sel = BME280_OSR_PRESS_SEL|BME280_OSR_TEMP_SEL|BME280_OSR_HUM_SEL|BME280_FILTER_SEL;
+  if(forced) {
+     // calc measure time ( bme280 data sheet chapter 9 )
+     // 𝑡𝑚𝑒𝑎𝑠𝑢𝑟𝑒,𝑚𝑎𝑥 = 1.25 + [2.3 ⋅ 𝑇_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔]𝑜𝑠𝑟𝑠_𝑡≠0 + [2.3 ⋅ 𝑃_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_𝑝≠0 + [2.3 ⋅ 𝐻_𝑜𝑣𝑒𝑟𝑠𝑎𝑚𝑝𝑙𝑖𝑛𝑔 + 0.575]𝑜𝑠𝑟𝑠_h≠0
+
+     this->measuredelay = 1.25;
+     if( bme280.settings.osr_t > 0 ) this->measuredelay += 2.3* ( 1 << (bme280.settings.osr_t-1));
+     if( bme280.settings.osr_p > 0 ) this->measuredelay += 2.3* ( 1 << (bme280.settings.osr_p-1)) + 0.575;
+     if( bme280.settings.osr_h > 0 ) this->measuredelay += 2.3* ( 1 << (bme280.settings.osr_h-1)) + 0.575;
+     settings_sel = BME280_OSR_PRESS_SEL|BME280_OSR_TEMP_SEL|BME280_OSR_HUM_SEL|BME280_FILTER_SEL;
+  } else {
+     bme280.settings.standby_time = this->standby_time;
+     settings_sel = BME280_OSR_PRESS_SEL|BME280_OSR_TEMP_SEL|BME280_OSR_HUM_SEL|BME280_FILTER_SEL|BME280_STANDBY_SEL;
+  }
 
   ret += bme280_set_sensor_settings(settings_sel, &bme280);
 
-  if(forced)
-    ret += bme280_set_sensor_mode(BME280_FORCED_MODE, &bme280);
-  else
-    ret += bme280_set_sensor_mode(BME280_NORMAL_MODE, &bme280);
+  if(!forced) ret += bme280_set_sensor_mode(BME280_NORMAL_MODE, &bme280);
 
+  this->set_setting = false;
   return ret;
 }
 
 void Bme280BoschWrapper::setTemperatureOversampling( uint8_t osr )
 {
   this->osr_t = osr2macro(osr);
+  this->set_setting = true;
 }
 
 void Bme280BoschWrapper::setPressureOversampling( uint8_t osr )
 {
   this->osr_p = osr2macro(osr);
+  this->set_setting = true;
 }
 
 void Bme280BoschWrapper::setHumidityOversampling( uint8_t osr )
 {
   this->osr_h = osr2macro(osr);
+  this->set_setting = true;
 }
 
 uint8_t Bme280BoschWrapper::osr2macro( uint8_t osr)
@@ -287,6 +292,11 @@ void Bme280BoschWrapper::setFilterCoeff( uint8_t fcoeff )
   if( fcoeff > 0 && fcoeff <= 16 ) {
     while ( ( fcoeff >> ctc ) >1 ) ctc++;  
   }
-  filter_coeff = ctc;
+  this->filter = ctc;
 }
 
+void Bme280BoschWrapper::setStandbyTime( uint8_t tstb )
+{
+  this->standby_time = tstb;
+  if(!forced) this->set_setting = true;
+}
